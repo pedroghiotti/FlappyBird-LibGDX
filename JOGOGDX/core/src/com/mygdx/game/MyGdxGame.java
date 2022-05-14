@@ -43,6 +43,7 @@ public class MyGdxGame extends ApplicationAdapter
 	private Texture tex_coinSilver;
 	private Texture tex_coinGold;
 	private Texture tex_coinCurrent;
+	private Texture tex_title;
 
 	private Sound soundWingFlap;
 	private Sound soundCollision;
@@ -52,8 +53,15 @@ public class MyGdxGame extends ApplicationAdapter
 	/*
 		Settings
 	*/
-	private float scrollSpeedBase = 300;
+	private float scrollSpeedBase = 400;
+	private float scrollSpeedMax = 1000;
+	private float scrollSpeedIncrement = 10;
 	private float pipesGapSize = 350;
+	private float playerPosHorizontalOffset = 50;
+	private float playerSpriteScale = .25f;
+	private float titleSpriteScale = .25f;
+	private float coinValueSilver = 5;
+	private float coinValueGold = 10;
 	private final float VIRTUAL_WIDTH = 720;
 	private final float VIRTUAL_HEIGHT = 1280;
 
@@ -74,11 +82,12 @@ public class MyGdxGame extends ApplicationAdapter
 	private float coinType = 0;
 	private float scrollSpeedCurrent;
 	private float playerPosY = 0;
-	private float playerPosX = 0;
+	private float playerPosX;
 	private float playerPosDownwardOffset = 2;
 	private float pipePosX;
 	private float pipePosY;
 	private float coinPosX;
+	private float coinPosXOffset;
 	private float coinPosY;
 	private float deviceWidth;
 	private float deviceHeight;
@@ -136,6 +145,7 @@ public class MyGdxGame extends ApplicationAdapter
 		tex_gameOver = new Texture("game_over.png");
 		tex_coinGold = new Texture("moeda_ouro.png");
 		tex_coinSilver = new Texture("moeda_prata.png");
+		tex_title = new Texture("logo.png");
 
 		soundWingFlap = Gdx.audio.newSound(Gdx.files.internal("som_asa.wav"));
 		soundCollision = Gdx.audio.newSound(Gdx.files.internal("som_batida.wav"));
@@ -157,6 +167,7 @@ public class MyGdxGame extends ApplicationAdapter
 		deviceWidth = VIRTUAL_WIDTH;
 		deviceHeight = VIRTUAL_HEIGHT;
 
+		playerPosX = playerPosHorizontalOffset;
 		playerPosY = deviceHeight / 2;
 		pipePosX = deviceWidth;
 		coinPosX = pipePosX + deviceWidth / 2;
@@ -247,8 +258,10 @@ public class MyGdxGame extends ApplicationAdapter
 		batch.draw // Desenha player
 		(
 			texArray_playerAnimFrames[(int) playerAnimFrame],
-			50 + playerPosX,
-			playerPosY
+			playerPosX,
+			playerPosY,
+			texArray_playerAnimFrames[0].getWidth() * playerSpriteScale,
+			texArray_playerAnimFrames[0].getHeight() * playerSpriteScale
 		);
 		batch.draw // Desenha cano de baixo
 		(
@@ -280,13 +293,28 @@ public class MyGdxGame extends ApplicationAdapter
 		batch.setProjectionMatrix(camera.combined);
 		batch.begin();
 
-		txt_score.draw // Desenha texto pontuação atual.
-		(
-			batch,
-			String.valueOf(score),
-			deviceWidth /2,
-			deviceHeight - 110
-		);
+		if(gameState == 0)
+		{
+			batch.draw // Desenha Título do game.
+			(
+				tex_title,
+				(deviceWidth / 2) - ((tex_title.getWidth() * titleSpriteScale) / 2),
+				(deviceHeight - 100) - (tex_title.getHeight() * titleSpriteScale),
+				tex_title.getWidth() * titleSpriteScale,
+				tex_title.getHeight() * titleSpriteScale
+			);
+		}
+
+		if(gameState == 1 || gameState == 2)
+		{
+			txt_score.draw // Desenha texto pontuação atual.
+			(
+				batch,
+				String.valueOf(score),
+				deviceWidth / 2 - 50,
+				deviceHeight - 110
+			);
+		}
 
 		if(gameState == 2)
 		{
@@ -306,8 +334,8 @@ public class MyGdxGame extends ApplicationAdapter
 			txt_highScore.draw // Desenha texto pontuação mais alta.
 			(
 				batch,
-				"Seu record é: " + highScore + "pontos",
-				deviceWidth /2 - 140,
+				"Seu record é: " + highScore + " pontos!",
+				deviceWidth /2 - 165,
 				deviceHeight /2 - tex_gameOver.getHeight()
 			);
 		}
@@ -327,28 +355,28 @@ public class MyGdxGame extends ApplicationAdapter
 		*/
 		collider_player.set // Posiciona colisor jogador.
 		(
-				50 + playerPosX + texArray_playerAnimFrames[0].getWidth() / 2,
-				playerPosY + texArray_playerAnimFrames[0].getHeight() / 2,
-				texArray_playerAnimFrames[0].getWidth() / 2
+				playerPosX + (texArray_playerAnimFrames[0].getWidth() * playerSpriteScale) / 2,
+				playerPosY + (texArray_playerAnimFrames[0].getHeight() * playerSpriteScale) / 2,
+				(texArray_playerAnimFrames[0].getWidth() * playerSpriteScale) / 2
 		);
 		collider_pipeBottom.set // Posiciona colisor cano de baixo.
 		(
-				pipePosX,
+			pipePosX,
 			deviceHeight / 2 - tex_pipeBottom.getHeight() - pipesGapSize /2 + pipePosY,
 			tex_pipeBottom.getWidth(),
 			tex_pipeBottom.getHeight()
 		);
 		collider_pipeTop.set // Posiciona colisor cano de cima.
 		(
-				pipePosX,
+			pipePosX,
 			deviceHeight / 2 + pipesGapSize / 2 + pipePosY,
 			tex_pipeTop.getWidth(),
 			tex_pipeTop.getHeight()
 		);
 		collider_coin.set // Posiciona colisor moeda.
 		(
-				coinPosX,
-				coinPosY,
+				coinPosX + tex_coinCurrent.getWidth() / 2,
+				coinPosY + tex_coinCurrent.getHeight() / 2,
 			tex_coinCurrent.getHeight() / 2
 		);
 
@@ -365,15 +393,10 @@ public class MyGdxGame extends ApplicationAdapter
 			coinPosY = deviceHeight * 2; // Posiciona moeda fora da tela para que não seja coletada várias vezes.
 
 			// Adiciona pontuação dependendo do tipo da moeda coletada.
-			if(coinType == 0) score += 1;
-			else if(coinType == 1) score += 2;
+			if(coinType == 0) score += coinValueSilver;
+			else if(coinType == 1) score += coinValueGold;
 
 			soundCoin.play();
-
-			// Randomiza o tipo da moeda e atualiza a textura.
-			coinType = random.nextInt(100) <= 75 ? 0 : 1;
-			if(coinType == 0) tex_coinCurrent = tex_coinSilver;
-			else if(coinType == 1) tex_coinCurrent = tex_coinGold;
 		}
 		if(hasCollidedPipeTop == true || hasCollidedPipeBottom == true)
 		{
@@ -398,6 +421,11 @@ public class MyGdxGame extends ApplicationAdapter
 				score++;
 				hasPassedPipes = true;
 				soundScore.play();
+
+				if(scrollSpeedCurrent < scrollSpeedMax)
+				{
+					scrollSpeedCurrent += scrollSpeedIncrement;
+				}
 			}
 		}
 	}
@@ -433,8 +461,14 @@ public class MyGdxGame extends ApplicationAdapter
 
 		if(coinPosX < -tex_coinCurrent.getWidth())
 		{
-			coinPosX = pipePosX + deviceWidth / 2;
-			coinPosY = random.nextInt( (int) deviceHeight);
+			coinPosXOffset = random.nextInt((int) deviceWidth - 2 * tex_pipeBottom.getWidth()) + tex_pipeBottom.getWidth();
+			coinPosX = pipePosX + coinPosXOffset;
+			coinPosY = random.nextInt((int) deviceHeight - tex_coinCurrent.getHeight());
+
+			// Randomiza o tipo da moeda e atualiza a textura.
+			coinType = random.nextInt(100) <= 75 ? 0 : 1;
+			if(coinType == 0) tex_coinCurrent = tex_coinSilver;
+			else if(coinType == 1) tex_coinCurrent = tex_coinGold;
 		}
 	}
 
@@ -465,7 +499,7 @@ public class MyGdxGame extends ApplicationAdapter
 		gameState = 0;
 		score = 0;
 
-		playerPosX = 0;
+		playerPosX = playerPosHorizontalOffset;
 		playerPosY = deviceHeight /2;
 		playerPosDownwardOffset = 0;
 
