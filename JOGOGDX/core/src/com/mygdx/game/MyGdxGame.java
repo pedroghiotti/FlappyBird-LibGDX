@@ -21,21 +21,15 @@ import java.util.Random;
 
 public class MyGdxGame extends ApplicationAdapter
 {
-	/*
-		References - MISC
-	*/
-	private SpriteBatch batch;
-	private ShapeRenderer shapeRenderer;
-	private OrthographicCamera camera;
-	private Viewport viewport;
-	private Random random;
-	private Preferences preferences;
+	private SpriteBatch batch; // Renderiza as texturas e textos
+	private ShapeRenderer shapeRenderer; // Permite criar formas. Usado pra definir colisores dos objetos
+	private OrthographicCamera camera; // Camera renderiza a tela do jogo
+	private Viewport viewport; // Gerencia dimensões da tela
+	private Random random; // Classe permite gerar números aleatórios
+	private Preferences preferences; // Classe usada para guardar high score na memória do dispositivo
 
-	/*
-		References - Assets
-	*/
+	// Variáveis guardam referência às texturas
 	private Texture[] texArray_playerAnimFrames;
-
 	private Texture tex_background;
 	private Texture tex_pipeTop;
 	private Texture tex_pipeBottom;
@@ -44,15 +38,14 @@ public class MyGdxGame extends ApplicationAdapter
 	private Texture tex_coinGold;
 	private Texture tex_coinCurrent;
 	private Texture tex_title;
-
+	
+	// Variáveis guardam referência aos assets de som
 	private Sound soundWingFlap;
 	private Sound soundCollision;
 	private Sound soundScore;
 	private Sound soundCoin;
 
-	/*
-		Settings
-	*/
+	// Variáveis guardam valores usados pra configuração do jogo.
 	private float scrollSpeedBase = 400;
 	private float scrollSpeedMax = 1000;
 	private float scrollSpeedIncrement = 10;
@@ -65,19 +58,18 @@ public class MyGdxGame extends ApplicationAdapter
 	private final float VIRTUAL_WIDTH = 720;
 	private final float VIRTUAL_HEIGHT = 1280;
 
-	/*
-		Variables
-	*/
+	// Shapes usados como colisor para os elementos do jogo
 	private Rectangle collider_pipeTop;
 	private Rectangle collider_pipeBottom;
-
 	private Circle collider_player;
 	private Circle collider_coin;
-
+	
+	// Textos desenhados na tela
 	private BitmapFont txt_score;
 	private BitmapFont txt_reset;
 	private BitmapFont txt_highScore;
-
+	
+	// Variáveis guardam valores relativos às posições e outros elementos para funcionamento do jogo (tipo da moeda sendo desenhada, dimensões do dispositivo, estado do jogo, pontuação)
 	private float playerAnimFrame = 0;
 	private float coinType = 0;
 	private float scrollSpeedCurrent;
@@ -91,11 +83,9 @@ public class MyGdxGame extends ApplicationAdapter
 	private float coinPosY;
 	private float deviceWidth;
 	private float deviceHeight;
-
 	private int gameState = 0;
 	private int score = 0;
 	private int highScore = 0;
-
 	private boolean hasPassedPipes = false;
 
 	/*
